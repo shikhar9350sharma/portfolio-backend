@@ -70,43 +70,84 @@ const dbName = "portfolio";
 
 let collection; // Declare globally
 
-async function connectDB() {
+// async function connectDB() {
+//   try {
+//     await client.connect();
+//     const db = client.db(dbName);
+//     collection = db.collection('messages');
+//     console.log("Connected to MongoDB");
+//   } catch (error) {
+//     console.error('Connection error:', error);
+//   }
+// }
+
+
+// // Routes
+// app.get('/', (req, res) => {
+//   res.send('Welcome to MongodbAtlas!');
+// });
+
+// app.post('/', async (req, res) => {
+//   const { username, email, message } = req.body;
+//   if (!username || !email || !message) {
+//     return res.status(400).json({ message: "All the fields are required!" });
+//   }
+
+//   try {
+//     const result = await collection.insertOne({
+//       username,
+//       email,
+//       message,
+//       timestamp: new Date()
+//     });
+//     return res.status(200).json({ message: "Message delivered successfully", id: result.insertedId });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Failed to save message", error: error.message });
+//   }
+// });
+
+// app.listen(port, async () => {
+//   await connectDB();
+//   console.log(`Example app listening on http://localhost:${port}`);
+// });
+async function connectDBAndStartServer() {
   try {
     await client.connect();
     const db = client.db(dbName);
     collection = db.collection('messages');
     console.log("Connected to MongoDB");
+
+    // Define routes only after DB is ready
+    app.get('/', (req, res) => {
+      res.send('Welcome to MongodbAtlas!');
+    });
+
+    app.post('/', async (req, res) => {
+      const { username, email, message } = req.body;
+      if (!username || !email || !message) {
+        return res.status(400).json({ message: "All the fields are required!" });
+      }
+
+      try {
+        const result = await collection.insertOne({
+          username,
+          email,
+          message,
+          timestamp: new Date()
+        });
+        return res.status(200).json({ message: "Message delivered successfully", id: result.insertedId });
+      } catch (error) {
+        return res.status(500).json({ message: "Failed to save message", error: error.message });
+      }
+    });
+
+    app.listen(port, () => {
+      console.log(`Example app listening on http://localhost:${port}`);
+    });
+
   } catch (error) {
     console.error('Connection error:', error);
   }
 }
 
-
-// Routes
-app.get('/', (req, res) => {
-  res.send('Welcome to MongodbAtlas!');
-});
-
-app.post('/', async (req, res) => {
-  const { username, email, message } = req.body;
-  if (!username || !email || !message) {
-    return res.status(400).json({ message: "All the fields are required!" });
-  }
-
-  try {
-    const result = await collection.insertOne({
-      username,
-      email,
-      message,
-      timestamp: new Date()
-    });
-    return res.status(200).json({ message: "Message delivered successfully", id: result.insertedId });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to save message", error: error.message });
-  }
-});
-
-app.listen(port, async () => {
-  await connectDB();
-  console.log(`Example app listening on http://localhost:${port}`);
-});
+connectDBAndStartServer();
