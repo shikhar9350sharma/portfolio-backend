@@ -80,32 +80,38 @@ async function connectDB() {
     console.error('Connection error:', error);
   }
 }
-
-// Routes
-app.get('/', (req, res) => {
-  res.send('Welcome to MongodbAtlas!');
-});
-
-app.post('/', async (req, res) => {
-  const { username, email, message } = req.body;
-  if (!username || !email || !message) {
-    return res.status(400).json({ message: "All the fields are required!" });
-  }
-
-  try {
-    const result = await collection.insertOne({
-      username,
-      email,
-      message,
-      timestamp: new Date()
-    });
-    return res.status(200).json({ message: "Message delivered successfully", id: result.insertedId });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to save message", error: error.message });
-  }
-});
-
-app.listen(port, async () => {
+(async () => {
   await connectDB();
-  console.log(`Example app listening on http://localhost:${port}`);
-});
+
+  // Routes
+  app.get('/', (req, res) => {
+    res.send('Welcome to MongodbAtlas!');
+  });
+
+  app.post('/', async (req, res) => {
+    const { username, email, message } = req.body;
+
+    if (!username || !email || !message) {
+      return res.status(400).json({ message: "All the fields are required!" });
+    }
+
+    try {
+      if (!collection) {
+        console.error("MongoDB collection not initialized");
+        return res.status(500).json({ message: "Database not ready" });
+      }
+
+      const result = await collection.insertOne({
+        username,
+        email,
+        message,
+        timestamp: new Date()
+      });
+
+      return res.status(200).json({ message: "Message delivered successfully", id: result.insertedId });
+    } catch (error) {
+      console.error("Insert error:", error);
+      return res.status(500).json({ message: "Failed to save message", error: error.message });
+    }
+  });
+})();
